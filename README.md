@@ -44,11 +44,7 @@ Usage example
 -------------
 
 ```
-(curl -s wget.racing/nench.sh | bash; curl -s wget.racing/nench.sh | bash) 2>&1 | tee nench.log
-```
-
-```
-(wget -qO- wget.racing/nench.sh | bash; wget -qO- wget.racing/nench.sh | bash) 2>&1 | tee nench.log
+curl -s https://raw.githubusercontent.com/shannon-6block/nench/master/nench.sh | bash
 ```
 
 Example output

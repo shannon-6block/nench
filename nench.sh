@@ -133,16 +133,12 @@ printf '%s\n' '-------------------------------------------------'
 
 printf '\n'
 
-if ! command_exists ioping
-then
-    curl -s --max-time 10 -o ioping.static http://wget.racing/ioping.static
-    chmod +x ioping.static
-    ioping_cmd="./ioping.static"
-else
-    ioping_cmd="ioping"
-fi
+curl -s -o ioping https://raw.githubusercontent.com/shannon-6block/nench/master/ioping
+chmod +x ioping
+ioping_cmd="./ioping"
 
 # Basic info
+printf '\033[32mBasic Info:\033[0m\n'
 if [ "$(uname)" = "Linux" ]
 then
     printf 'Processor:    '
@@ -180,12 +176,32 @@ else
         swapinfo -k | awk 'NR>1 && $1!="Total" {total+=$2} END {print total*1024}' | B_to_MiB
     fi
 fi
-printf 'Kernel:       '
-uname -s -r -m
 
 printf '\n'
 
-printf 'Disks:\n'
+# CPU tests
+printf '\033[32mCPU Tests:\033[0m\n'
+export TIMEFORMAT='%3R seconds'
+
+printf 'CPU: SHA256-hashing 500 MB\n    '
+command_benchmark -q sha256sum || command_benchmark -q sha256 || printf '[no SHA256 command found]\n'
+
+printf 'CPU: bzip2-compressing 500 MB\n    '
+command_benchmark bzip2
+
+printf 'CPU: AES-encrypting 500 MB\n    '
+command_benchmark openssl enc -e -aes-256-cbc -pass pass:12345678 | sed '/^\*\*\* WARNING : deprecated key derivation used\.$/d;/^Using -iter or -pbkdf2 would be better\.$/d'
+
+printf '\n'
+
+# GPU
+printf '\033[32mGPU Tests:\033[0m\n'
+nvidia-smi -L
+
+printf '\n'
+
+# disks
+printf '\033[32mDisks:\033[0m\n'
 if command_exists lsblk && [ -n "$(lsblk)" ]
 then
     lsblk --nodeps --noheadings --output NAME,SIZE,ROTA --exclude 1,2,11 | sort | awk '{if ($3 == 0) {$3="SSD"} else {$3="HDD"}; printf("%-3s%8s%5s\n", $1, $2, $3)}'
@@ -198,20 +214,6 @@ then
 else
     printf '[ no data available ]'
 fi
-
-printf '\n'
-
-# CPU tests
-export TIMEFORMAT='%3R seconds'
-
-printf 'CPU: SHA256-hashing 500 MB\n    '
-command_benchmark -q sha256sum || command_benchmark -q sha256 || printf '[no SHA256 command found]\n'
-
-printf 'CPU: bzip2-compressing 500 MB\n    '
-command_benchmark bzip2
-
-printf 'CPU: AES-encrypting 500 MB\n    '
-command_benchmark openssl enc -e -aes-256-cbc -pass pass:12345678 | sed '/^\*\*\* WARNING : deprecated key derivation used\.$/d;/^Using -iter or -pbkdf2 would be better\.$/d'
 
 printf '\n'
 
@@ -247,7 +249,7 @@ fi
 printf '\n'
 
 # Network speedtests
-
+printf '\033[32mNetwork:\033[0m\n'
 ipv4=$(curl -4 -s --max-time 5 http://icanhazip.com/)
 if [ -n "$ipv4" ]
 then
@@ -312,4 +314,4 @@ printf '%s\n' '-------------------------------------------------'
 
 # delete downloaded ioping binary if script has been run straight from a pipe
 # (rather than a downloaded file)
-[ -t 0 ] || rm -f ioping.static
+[ -t 0 ] || rm -f ioping
