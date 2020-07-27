@@ -14,6 +14,11 @@
 # - list of possibly required packages: curl,gawk,coreutils,util-linux,procps,ioping
 ##########
 
+trap 'onCtrlC' INT
+function onCtrlC () {
+    rm -f ./ioping
+}
+
 command_exists()
 {
     command -v "$@" > /dev/null 2>&1
@@ -176,6 +181,7 @@ else
         swapinfo -k | awk 'NR>1 && $1!="Total" {total+=$2} END {print total*1024}' | B_to_MiB
     fi
 fi
+nvidia-smi -L
 
 printf '\n'
 
@@ -191,12 +197,6 @@ command_benchmark bzip2
 
 printf 'CPU: AES-encrypting 500 MB\n    '
 command_benchmark openssl enc -e -aes-256-cbc -pass pass:12345678 | sed '/^\*\*\* WARNING : deprecated key derivation used\.$/d;/^Using -iter or -pbkdf2 would be better\.$/d'
-
-printf '\n'
-
-# GPU
-printf '\033[32mGPU Tests:\033[0m\n'
-nvidia-smi -L
 
 printf '\n'
 
@@ -314,4 +314,4 @@ printf '%s\n' '-------------------------------------------------'
 
 # delete downloaded ioping binary if script has been run straight from a pipe
 # (rather than a downloaded file)
-[ -t 0 ] || rm -f ioping
+[ -t 0 ] || rm -f ./ioping
